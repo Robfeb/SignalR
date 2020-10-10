@@ -69,5 +69,12 @@ namespace SignalR.Services
 
             return Task.CompletedTask;
         }
+
+        public Task<IReadOnlyDictionary<Guid, ChatRoom>> GetAllRooms()
+        {
+            return Task.FromResult(
+                _roomInfo as IReadOnlyDictionary<Guid, ChatRoom>);
+        }
+
     }
 }

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace ExploreCalifornia.Pages
+namespace SignalR.Pages
 {
     public class PrivacyModel : PageModel
     {

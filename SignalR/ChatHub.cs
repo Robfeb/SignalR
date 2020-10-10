@@ -1,47 +1,53 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using SignalR.Models;
 using SignalR.Services;
 
 namespace SignalR
 {
-    public class ChatHub: Hub
+    public class ChatHub : Hub
     {
-
         private readonly IChatRoomService _chatRoomService;
+        private readonly IHubContext<AgentHub> _agentHub;
 
-        public ChatHub(IChatRoomService chatRoomService)
+        public ChatHub(
+            IChatRoomService chatRoomService,
+            IHubContext<AgentHub> agentHub)
         {
             _chatRoomService = chatRoomService;
+            _agentHub = agentHub;
         }
 
         public override async Task OnConnectedAsync()
         {
+            if (Context.User.Identity.IsAuthenticated)
+            {
+                // Authenticated agents don't need a room
+                await base.OnConnectedAsync();
+                return;
+            }
+
             var roomId = await _chatRoomService.CreateRoom(
-               Context.ConnectionId);
+                Context.ConnectionId);
 
             await Groups.AddToGroupAsync(
                 Context.ConnectionId, roomId.ToString());
 
-            await Clients.All.SendAsync(
+            await Clients.Caller.SendAsync(
                 "ReceiveMessage",
-                "Chat Room",
+                "Explore California",
                 DateTimeOffset.UtcNow,
-                "Hi There! What Can I help you with?");
-            await base.OnConnectedAsync();
-        }
+                "Hello! What can we help you with today?");
 
-        public override Task OnDisconnectedAsync(Exception exception)
-        {
-            return base.OnDisconnectedAsync(exception);
+            await base.OnConnectedAsync();
         }
 
         public async Task SendMessage(string name, string text)
         {
             var roomId = await _chatRoomService.GetRoomForConnectionId(
-               Context.ConnectionId);
-
+                Context.ConnectionId);
 
             var message = new ChatMessage
             {
@@ -50,13 +56,6 @@ namespace SignalR
                 SentAt = DateTimeOffset.UtcNow
             };
 
-            // Broadcast to all clients
-            /* await Clients.All.SendAsync(
-                 "ReceiveMessage",
-                message.SenderName,
-                message.SentAt,
-                message.Text);
-            */
             await _chatRoomService.AddMessage(roomId, message);
 
             // Broadcast to all clients
@@ -65,7 +64,6 @@ namespace SignalR
                 message.SenderName,
                 message.SentAt,
                 message.Text);
-
 
         }
 
@@ -77,6 +75,31 @@ namespace SignalR
                 Context.ConnectionId);
 
             await _chatRoomService.SetRoomName(roomId, roomName);
+
+            await _agentHub.Clients.All
+                .SendAsync(
+                    "ActiveRooms",
+                    await _chatRoomService.GetAllRooms());
+        }
+
+        [Authorize]
+        public async Task JoinRoom(Guid roomId)
+        {
+            if (roomId == Guid.Empty)
+                throw new ArgumentException("Invalid room ID");
+
+            await Groups.AddToGroupAsync(
+                Context.ConnectionId, roomId.ToString());
+        }
+
+        [Authorize]
+        public async Task LeaveRoom(Guid roomId)
+        {
+            if (roomId == Guid.Empty)
+                throw new ArgumentException("Invalid room ID");
+
+            await Groups.RemoveFromGroupAsync(
+                Context.ConnectionId, roomId.ToString());
         }
     }
 }
