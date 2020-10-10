@@ -4,8 +4,8 @@ namespace SignalR.Models
 {
     public class ChatMessage
     {
-        public string Message { get; set; }
-        public string User { get; set; }
-        public DateTimeOffset Sent { get; set; }
+        public string SenderName { get; set; }
+        public string Text { get; set; }
+        public DateTimeOffset SentAt { get; set; }
     }
 }

@@ -9,7 +9,11 @@ namespace SignalR
     {
         public override async Task OnConnectedAsync()
         {
-            await Clients.All.SendAsync("ReceiveMessage", "Chat Room", "Hi There! What Can I help you with?", DateTime.Now);
+            await Clients.All.SendAsync(
+                "ReceiveMessage",
+                "Chat Room",
+                DateTimeOffset.UtcNow,
+                "Hi There! What Can I help you with?");
             await base.OnConnectedAsync();
         }
 
@@ -22,11 +26,17 @@ namespace SignalR
         {
             var message = new ChatMessage
             {
-                Message = text,
-                User = name,
-                Sent = DateTimeOffset.UtcNow
+                SenderName = name,
+                Text = text,
+                SentAt = DateTimeOffset.UtcNow
             };
-            await Clients.All.SendAsync("ReceiveMessage",message.User,message.Message, message.Sent) ;
+
+            // Broadcast to all clients
+            await Clients.All.SendAsync(
+                "ReceiveMessage",
+                message.SenderName,
+                message.SentAt,
+                message.Text);
 
         }
     }

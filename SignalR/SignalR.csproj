@@ -7,4 +7,8 @@
   <ItemGroup>
     <Folder Include="Models\" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Remove="wwwroot\favicon.ico" />
+    <Content Remove="Pages\Privacy.cshtml" />
+  </ItemGroup>
 </Project>
