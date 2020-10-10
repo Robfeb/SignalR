@@ -2,6 +2,7 @@
 
 var dialogEl = document.getElementById('chatDialog');
 
+// Initialize the SignalR client
 var connection = new signalR.HubConnectionBuilder()
     .withUrl('/chatHub')
     .build();
@@ -31,6 +32,8 @@ function onConnected() {
 
     var messageTextboxEl = document.getElementById('messageTextbox');
     messageTextboxEl.focus();
+
+    connection.invoke('SetName', chatterName);
 }
 
 
